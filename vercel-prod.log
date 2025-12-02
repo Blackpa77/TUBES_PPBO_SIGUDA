@@ -1,0 +1,11 @@
+Error ENOENT: no such file or directory, open '/vercel/path0/vendor/composer/platform_check.php' pada Vercel adalah error klasik kalau:
+
+✔️ Composer menghapus file platform_check.php
+
+Mulai Composer 2.2+, file ini hanya dibuat kalau diperlukan.
+Tetapi builder vercel-php (0.7.4) masih menganggap file ini pasti ada, sehingga error muncul.
+
+Cara Fix 100% – Tambahkan "platform-check": false di composer.json
+"config": {
+    "platform-check": false
+}
