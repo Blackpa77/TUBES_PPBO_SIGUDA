@@ -1,19 +1,34 @@
 <?php
-require_once __DIR__ . '/../config/database.php';
-require_once __DIR__ . '/../models/Produk.php';
-require_once __DIR__ . '/../models/TransaksiMasuk.php';
-require_once __DIR__ . '/../models/TransaksiKeluar.php';
-require_once __DIR__ . '/../models/Kategori.php';
+namespace App\Controllers;
 
-// 5. Integrasi Database - penerapan konsep OOP
-$database = new Database();
-$db = $database->getConnection();
+use App\Config\Database;
+use App\Models\Produk;
+use App\Models\Kategori;
+use App\Models\TransaksiMasuk;
+use App\Models\TransaksiKeluar;
 
-// Instansiasi class
-$produk = new Produk($db);
-$kategori = new Kategori($db);
-$transaksiMasuk = new TransaksiMasuk($db);
-$transaksiKeluar = new TransaksiKeluar($db);
+class DashboardController
+{
+    private $db;
+    private $produk;
+    private $kategori;
+    private $transMasuk;
+    private $transKeluar;
 
-//2. struktur program & arditektur - Pemisahan logika dan tampilan
-include __DIR__ . '/../views/dashboard.php';
+    public function __construct()
+    {
+        session_start();
+        $database = new Database();
+        $this->db = $database->getConnection();
+
+        $this->produk = new Produk($this->db);
+        $this->kategori = new Kategori($this->db);
+        $this->transMasuk = new TransaksiMasuk($this->db);
+        $this->transKeluar = new TransaksiKeluar($this->db);
+    }
+
+    public function index()
+    {
+        require_once __DIR__ . '/../Views/dashboard.php';
+    }
+}

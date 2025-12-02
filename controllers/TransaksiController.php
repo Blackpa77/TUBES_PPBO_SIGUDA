@@ -1,112 +1,141 @@
 <?php
-require_once __DIR__ . '/../config/database.php';
-require_once __DIR__ . '/../models/TransaksiMasuk.php';
-require_once __DIR__ . '/../models/TransaksiKeluar.php';
-require_once __DIR__ . '/../models/Produk.php';
+namespace App\Controllers;
 
-// Koneksi database
-$database = new Database();
-$db = $database->getConnection();
-$produk = new Produk($db);
+use App\Config\Database;
+use App\Models\TransaksiMasuk;
+use App\Models\TransaksiKeluar;
+use App\Models\Produk;
 
-$action = $_GET['action'] ?? 'index'; //get untuk medapatkan data
+class TransaksiController
+{
+    private $db;
+    private $transaksiMasuk;
+    private $transaksiKeluar;
+    private $produk;
 
-switch ($action) {
+    public function __construct()
+    {
+        if (session_status() == PHP_SESSION_NONE) {
+            session_start();
+        }
 
-    // menampilkan semua transaksi
-    
-    case 'index':
-        $transaksiMasuk = new TransaksiMasuk($db);
-        $transaksiKeluar = new TransaksiKeluar($db);
+        $database = new Database();
+        $this->db = $database->getConnection();
 
-        $stmtMasuk = $transaksiMasuk->readAll();
-        $stmtKeluar = $transaksiKeluar->readAll();
+        $this->transaksiMasuk = new TransaksiMasuk($this->db);
+        $this->transaksiKeluar = new TransaksiKeluar($this->db);
+        $this->produk = new Produk($this->db);
+    }
 
-        $transaksiList = array_merge(
-            $stmtMasuk->fetchAll(PDO::FETCH_ASSOC),
-            $stmtKeluar->fetchAll(PDO::FETCH_ASSOC)
-        );
+    // ==========================
+    // 1. HALAMAN INDEX
+    // ==========================
+    public function index()
+    {
+        $dataMasuk = $this->transaksiMasuk->readAll()->fetchAll(\PDO::FETCH_ASSOC);
+        $dataKeluar = $this->transaksiKeluar->readAll()->fetchAll(\PDO::FETCH_ASSOC);
 
-        // Urutkan berdasarkan tanggal DESC
-        usort($transaksiList, function($a, $b) {
+        $transaksi = array_merge($dataMasuk, $dataKeluar);
+
+        // urutkan DESC
+        usort($transaksi, function ($a, $b) {
             return strtotime($b['tanggal']) - strtotime($a['tanggal']);
         });
 
-        include __DIR__ . '/../views/transaksi/index.php';
-        break;
+        $data = [
+            'title' => 'Data Transaksi',
+            'transaksi' => $transaksi
+        ];
 
-    // Tambah transaksi baru
-    case 'create':
+        require_once __DIR__ . '/../Views/transaksi/index.php';
+    }
+
+    // ==========================
+    // 2. TAMBAH TRANSAKSI
+    // ==========================
+    public function create()
+    {
         if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-            $jenis = $_POST['jenis_transaksi'] ?? 'masuk';
-            $transaksi = ($jenis === 'masuk') ? new TransaksiMasuk($db) : new TransaksiKeluar($db);
 
-            $transaksi->id_produk = $_POST['id_produk'] ?? 0;
-            $transaksi->jumlah = $_POST['jumlah'] ?? 0;
-            $transaksi->tanggal = $_POST['tanggal'] ?? date('Y-m-d H:i:s');
-            $transaksi->keterangan = $_POST['keterangan'] ?? '';
+            $jenis = $_POST['jenis_transaksi'] ?? 'masuk';
+            $transaksi = ($jenis === 'masuk') ? $this->transaksiMasuk : $this->transaksiKeluar;
+
+            $transaksi->id_produk = $_POST['id_produk'];
+            $transaksi->jumlah = $_POST['jumlah'];
+            $transaksi->tanggal = $_POST['tanggal'];
+            $transaksi->keterangan = $_POST['keterangan'];
             $transaksi->jenis_transaksi = $jenis;
 
-            // Validasi stok hanya untuk transaksi keluar
+            // validasi stok (khusus transaksi keluar)
             if ($jenis === 'keluar' && !$transaksi->validateStock()) {
-                $_SESSION['error'] = "Stok tidak mencukupi untuk transaksi keluar!";
+                $_SESSION['error'] = "Stok tidak mencukupi!";
             } else {
                 if ($transaksi->save()) {
-                    $_SESSION['success'] = "Transaksi berhasil disimpan";
-                    header("Location: $base_url/Transaksi");
+                    $_SESSION['success'] = "Transaksi berhasil disimpan!";
+                    header("Location: index.php?action=transaksi");
                     exit();
                 } else {
-                    $_SESSION['error'] = "Gagal menyimpan transaksi";
+                    $_SESSION['error'] = "Gagal menyimpan transaksi!";
                 }
             }
         }
 
-        // Ambil daftar produk
-        $stmt_produk = $produk->readAll();
-        $produkList = $stmt_produk->fetchAll(PDO::FETCH_ASSOC);
+        $produkList = $this->produk->readAll()->fetchAll(\PDO::FETCH_ASSOC);
+        $data = ['produk' => $produkList];
 
-        include __DIR__ . '/../views/transaksi/create.php';
-        break;
+        require_once __DIR__ . '/../Views/transaksi/create.php';
+    }
 
-    // Hapus transaksi
-    case 'delete':
-        if (isset($_GET['id'], $_GET['jenis'])) {
-            $jenis = $_GET['jenis'];
-            $transaksi = ($jenis === 'masuk') ? new TransaksiMasuk($db) : new TransaksiKeluar($db);
-            $transaksi->id_transaksi = $_GET['id'];
-
-            if ($transaksi->delete()) {
-                $_SESSION['success'] = "Transaksi berhasil dihapus";
-            } else {
-                $_SESSION['error'] = "Gagal menghapus transaksi";
-            }
+    // ==========================
+    // 3. HAPUS TRANSAKSI
+    // ==========================
+    public function delete()
+    {
+        if (!isset($_GET['id'], $_GET['jenis'])) {
+            header("Location: index.php?action=transaksi");
+            exit();
         }
-        header("Location: $base_url/Transaksi");
+
+        $id = $_GET['id'];
+        $jenis = $_GET['jenis'];
+
+        $transaksi = ($jenis === 'masuk') ? $this->transaksiMasuk : $this->transaksiKeluar;
+        $transaksi->id_transaksi = $id;
+
+        if ($transaksi->delete()) {
+            $_SESSION['success'] = "Transaksi berhasil dihapus!";
+        } else {
+            $_SESSION['error'] = "Gagal menghapus transaksi!";
+        }
+
+        header("Location: index.php?action=transaksi");
         exit();
+    }
 
-    // Cetak laporan transaksi
-    case 'cetak_laporan':
+    // ==========================
+    // 4. CETAK LAPORAN
+    // ==========================
+    public function cetakLaporan()
+    {
         $start_date = $_GET['start_date'] ?? date('Y-m-01');
-        $end_date = $_GET['end_date'] ?? date('Y-m-d');
+        $end_date   = $_GET['end_date'] ?? date('Y-m-d');
 
-        $transaksiMasuk = new TransaksiMasuk($db);
-        $transaksiKeluar = new TransaksiKeluar($db);
+        $dataMasuk  = $this->transaksiMasuk->readLaporan($start_date, $end_date)->fetchAll(\PDO::FETCH_ASSOC);
+        $dataKeluar = $this->transaksiKeluar->readLaporan($start_date, $end_date)->fetchAll(\PDO::FETCH_ASSOC);
 
-        $dataMasuk = $transaksiMasuk->readLaporan($start_date, $end_date)->fetchAll(PDO::FETCH_ASSOC);
-        $dataKeluar = $transaksiKeluar->readLaporan($start_date, $end_date)->fetchAll(PDO::FETCH_ASSOC);
+        $laporan = array_merge($dataMasuk, $dataKeluar);
 
-        $data = array_merge($dataMasuk, $dataKeluar);
-
-        // Urutkan berdasarkan tanggal 
-        usort($data, function($a, $b) {
+        // urutkan ASC
+        usort($laporan, function ($a, $b) {
             return strtotime($a['tanggal']) - strtotime($b['tanggal']);
         });
 
-        include __DIR__ . '/../views/transaksi/cetak_laporan.php';
-        break;
+        $data = [
+            'laporan' => $laporan,
+            'start_date' => $start_date,
+            'end_date' => $end_date
+        ];
 
-    default:
-        header("Location: $base_url/Transaksi");
-        exit();
+        require_once __DIR__ . '/../Views/transaksi/cetak_laporan.php';
+    }
 }
-?>

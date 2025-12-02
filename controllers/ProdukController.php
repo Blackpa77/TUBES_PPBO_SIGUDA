@@ -1,128 +1,124 @@
 <?php
-// 2. MVC/Modular
-require_once __DIR__ . '/../config/database.php';
-require_once __DIR__ . '/../models/Produk.php';
-require_once __DIR__ . '/../models/Kategori.php';
+namespace App\Controllers;
 
-$database = new Database();
-$db = $database->getConnection();
-$produk = new Produk($db);
-$kategori = new Kategori($db);
+use App\Config\Database;
+use App\Models\Produk;
+use App\Models\Kategori;
+use Dompdf\Dompdf;
+use Dompdf\Options;
 
-$action = isset($_GET['action']) ? $_GET['action'] : 'index';
+class ProdukController
+{
+    private $db;
+    private $produk;
+    private $kategori;
 
-// 4. Fungsionalitas Utama Aplikasi - CRUD (Tambah, ubah, hapus, lihat data)
-switch($action) {
-    case 'index':
-        $stmt = $produk->readAll();
-        include __DIR__ . '/../views/produk/index.php';
-        break;
-        
-    case 'create':
-        if($_SERVER['REQUEST_METHOD'] == 'POST') {
-            // 3. BUKTI ENCAPSULATION: Menggunakan SETTER untuk set data
-            $produk->setIdKategori($_POST['kategori_id']);
-            $produk->setKodeProduk($_POST['kode_produk']);
-            $produk->setNamaProduk($_POST['nama_produk']);
-            $produk->setUkuran($_POST['ukuran']);
-            $produk->setWarna($_POST['warna']);
-            $produk->setStok($_POST['stok']);
-            $produk->setHargaBeli($_POST['harga_beli']);
-            $produk->setHargaJual($_POST['harga_jual']);
-            $produk->setDeskripsi($_POST['deskripsi']);
-            
-            if($produk->create()) {
+    public function __construct()
+    {
+        session_start();
+        $database = new Database();
+        $this->db = $database->getConnection();
+
+        $this->produk = new Produk($this->db);
+        $this->kategori = new Kategori($this->db);
+    }
+
+    public function index()
+    {
+        $stmt = $this->produk->readAll();
+        require_once __DIR__ . '/../Views/produk/index.php';
+    }
+
+    public function create()
+    {
+        if ($_SERVER['REQUEST_METHOD'] == 'POST') {
+
+            $this->produk->setIdKategori($_POST['kategori_id']);
+            $this->produk->setKodeProduk($_POST['kode_produk']);
+            $this->produk->setNamaProduk($_POST['nama_produk']);
+            $this->produk->setUkuran($_POST['ukuran']);
+            $this->produk->setWarna($_POST['warna']);
+            $this->produk->setStok($_POST['stok']);
+            $this->produk->setHargaBeli($_POST['harga_beli']);
+            $this->produk->setHargaJual($_POST['harga_jual']);
+            $this->produk->setDeskripsi($_POST['deskripsi']);
+
+            if ($this->produk->create()) {
                 $_SESSION['success'] = "Produk berhasil ditambahkan";
-                header("Location: $base_url/Produk");
-                exit();
-            } else {
-                $_SESSION['error'] = "Gagal menambah produk (Kode Produk mungkin duplikat)";
+                header("Location: index.php?controller=produk");
+                exit;
             }
+
+            $_SESSION['error'] = "Gagal menambahkan produk";
         }
-        
-        $stmt_kategori = $kategori->readAll(); 
-        include __DIR__ . '/../views/produk/create.php';
-        break;
-        
-    case 'edit':
-        if(isset($_GET['id'])) {
-            // Set ID menggunakan setter
-            $produk->setIdProduk($_GET['id']);
-            $produk->readOne();
-            
-            if($_SERVER['REQUEST_METHOD'] == 'POST') {
-                // Update menggunakan setter
-                $produk->setIdKategori($_POST['kategori_id']);
-                $produk->setKodeProduk($_POST['kode_produk']);
-                $produk->setNamaProduk($_POST['nama_produk']);
-                $produk->setUkuran($_POST['ukuran']);
-                $produk->setWarna($_POST['warna']);
-                $produk->setStok($_POST['stok']);
-                $produk->setHargaBeli($_POST['harga_beli']);
-                $produk->setHargaJual($_POST['harga_jual']);
-                $produk->setDeskripsi($_POST['deskripsi']);
-                
-                if($produk->update()) {
-                    $_SESSION['success'] = "Produk berhasil diupdate";
-                    header("Location: $base_url/Produk");
-                    exit();
-                } else {
-                    $_SESSION['error'] = "Gagal mengupdate produk";
-                }
-            }
-        }
-        $stmt_kategori = $kategori->readAll();
-        include __DIR__ . '/../views/produk/edit.php';
-        break;
-        
-    case 'delete':
-        if(isset($_GET['id'])) {
-            $produk->setIdProduk($_GET['id']);
-            
-            if($produk->delete()) {
-                $_SESSION['success'] = "Produk berhasil dihapus";
-            } else {
-                $_SESSION['error'] = "Gagal menghapus produk";
-            }
-        }
-        header("Location: $base_url/Produk");
-        exit();
-        
-    case 'cetak':
-        // Cetak HTML (untuk print browser)
-        $stmt = $produk->readAll();
-        // Cek apakah data dikirim dari controller
-        if (!isset($stmt)) {
-            echo "Error: Data tidak ditemukan. Silakan akses lewat Controller.";
+
+        $stmt_kategori = $this->kategori->readAll();
+        require_once __DIR__ . '/../Views/produk/create.php';
+    }
+
+    public function edit()
+    {
+        if (!isset($_GET['id'])) {
+            header("Location: index.php?controller=produk");
             exit;
         }
 
-        // Load Composer Autoload
-        require_once __DIR__ . '/../vendor/autoload.php';
+        $this->produk->setIdProduk($_GET['id']);
+        $this->produk->readOne();
 
-        // Import Dompdf Classes
+        if ($_SERVER['REQUEST_METHOD'] == 'POST') {
 
-        // Konfigurasi Dompdf
-        $options = new Dompdf\Options();
+            $this->produk->setIdKategori($_POST['kategori_id']);
+            $this->produk->setKodeProduk($_POST['kode_produk']);
+            $this->produk->setNamaProduk($_POST['nama_produk']);
+            $this->produk->setUkuran($_POST['ukuran']);
+            $this->produk->setWarna($_POST['warna']);
+            $this->produk->setStok($_POST['stok']);
+            $this->produk->setHargaBeli($_POST['harga_beli']);
+            $this->produk->setHargaJual($_POST['harga_jual']);
+            $this->produk->setDeskripsi($_POST['deskripsi']);
+
+            if ($this->produk->update()) {
+                $_SESSION['success'] = "Produk berhasil diupdate";
+                header("Location: index.php?controller=produk");
+                exit;
+            }
+
+            $_SESSION['error'] = "Gagal mengupdate data";
+        }
+
+        $stmt_kategori = $this->kategori->readAll();
+        require_once __DIR__ . '/../Views/produk/edit.php';
+    }
+
+    public function delete()
+    {
+        if (isset($_GET['id'])) {
+            $this->produk->setIdProduk($_GET['id']);
+            $this->produk->delete();
+            $_SESSION['success'] = "Produk berhasil dihapus";
+        }
+
+        header("Location: index.php?controller=produk");
+        exit;
+    }
+
+    public function cetak_pdf()
+    {
+        $stmt = $this->produk->readAll();
+
+        $options = new Options();
         $options->set('isHtml5ParserEnabled', true);
-        $options->set('isRemoteEnabled', true); // Untuk load CSS/image dari URL
+        $options->set('isRemoteEnabled', true);
+        $dompdf = new Dompdf($options);
 
-        $dompdf = new Dompdf\Dompdf($options);
-
-        // Mulai buffer HTML
         ob_start();
-        include __DIR__ . '/../views/produk/cetak.php';
-        break;
-    
-    case 'cetak_pdf':
-        // Export ke PDF menggunakan DOMPDF
-        $stmt = $produk->readAll();
-        include __DIR__ . '/../views/produk/cetak_pdf.php';
-        break;
-        
-    default:
-        $stmt = $produk->readAll();
-        include __DIR__ . '/../views/produk/index.php';
-        break;
+        require_once __DIR__ . '/../Views/produk/cetak_pdf.php';
+        $html = ob_get_clean();
+
+        $dompdf->loadHtml($html);
+        $dompdf->setPaper('A4', 'landscape');
+        $dompdf->render();
+        $dompdf->stream("laporan_produk.pdf", ["Attachment" => false]);
+    }
 }
-?>
