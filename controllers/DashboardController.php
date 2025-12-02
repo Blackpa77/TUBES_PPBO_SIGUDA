@@ -9,18 +9,28 @@ use App\Models\TransaksiKeluar;
 
 class DashboardController
 {
-    private $db;
-    private $produk;
-    private $kategori;
-    private $transMasuk;
-    private $transKeluar;
+    protected $db;
+    protected $produk;
+    protected $kategori;
+    protected $transMasuk;
+    protected $transKeluar;
+    protected $base_url;
 
     public function __construct()
     {
-        session_start();
+        // Mulai session aman
+        if (session_status() === PHP_SESSION_NONE) {
+            session_start();
+        }
+
+        // Load base URL dari config
+        $this->base_url = $_ENV['BASE_URL'] ?? 'http://localhost';
+
+        // Koneksi database
         $database = new Database();
         $this->db = $database->getConnection();
 
+        // Load model
         $this->produk = new Produk($this->db);
         $this->kategori = new Kategori($this->db);
         $this->transMasuk = new TransaksiMasuk($this->db);
@@ -29,6 +39,13 @@ class DashboardController
 
     public function index()
     {
-        require_once __DIR__ . '/../Views/dashboard.php';
+        // Ambil data summary untuk dashboard
+        $totalProduk = $this->produk->countAll();
+        $totalKategori = $this->kategori->countAll();
+        $masukHariIni = $this->transMasuk->countToday();
+        $keluarHariIni = $this->transKeluar->countToday();
+
+        // Kirim ke view
+        include __DIR__ . '/../Views/dashboard.php';
     }
 }
