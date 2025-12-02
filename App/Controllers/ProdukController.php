@@ -2,6 +2,8 @@
 
 namespace App\Controllers;
 
+require_once __DIR__ . '/../vendor/autoload.php';
+
 use App\Config\Database;
 use App\Models\Produk;
 use App\Models\Kategori;
