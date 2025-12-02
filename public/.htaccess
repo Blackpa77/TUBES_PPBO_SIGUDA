@@ -1,0 +1,12 @@
+Options -Multiviews
+
+RewriteEngine On 
+RewriteCond %{REQUEST_FILENAME} !-d
+RewriteCond %{REQUEST_FILENAME} !-f
+RewriteRule ^(.*)$ index.php?url=$1 [L]
+
+#Multiviews = menjalankan berbagai perintah setelahnya
+#RewriteEngine On = mekanisme rewrite url
+#RewriteCond % = "{} adalah objek" !-d = melompati akses jika direktori terdeteksi
+# !-f = melompati akses jika file terdeteksi
+#RewriteRule= jika folder dan file tidak ada maka melompatinya dan menyimpan dalam $_GET['url']

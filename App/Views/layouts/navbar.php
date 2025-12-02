@@ -1,22 +1,22 @@
 <nav class="navbar navbar-expand-lg navbar-dark bg-primary mb-4">
     <div class="container">
-        <a class="navbar-brand" href="<?= $base_url ?>/dashboard">SIGUDA PPBO</a>
+        <a class="navbar-brand" href="<?= $base_url ?>/Dashboard">SIGUDA PPBO</a>
         <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
             <span class="navbar-toggler-icon"></span>
         </button>
         <div class="collapse navbar-collapse" id="navbarNav">
             <ul class="navbar-nav me-auto">
                 <li class="nav-item">
-                    <a class="nav-link" href="<?= $base_url ?>/dashboard">Dashboard</a>
+                    <a class="nav-link" href="<?= $base_url ?>/Dashboard">Dashboard</a>
                 </li>
                 <li class="nav-item">
-                    <a class="nav-link" href="<?= $base_url ?>/kategori">Kategori</a>
+                    <a class="nav-link" href="<?= $base_url ?>/Kategori">Kategori</a>
                 </li>
                 <li class="nav-item">
-                    <a class="nav-link" href="<?= $base_url ?>/produk">Produk</a>
+                    <a class="nav-link" href="<?= $base_url ?>/Produk">Produk</a>
                 </li>
                 <li class="nav-item">
-                    <a class="nav-link" href="<?= $base_url ?>/transaksi">Transaksi</a>
+                    <a class="nav-link" href="<?= $base_url ?>/Transaksi">Transaksi</a>
                 </li>
             </ul>
             <ul class="navbar-nav">
