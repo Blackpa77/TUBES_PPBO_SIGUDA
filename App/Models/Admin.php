@@ -1,4 +1,8 @@
 <?php
+namespace App\Models;
+
+use PDO;
+
 class Admin {
     private $conn;
     private $table = "users";
