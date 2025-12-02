@@ -17,11 +17,11 @@ class Database {
 
     public function __construct() {
         // var_dump('TEST .env is loaded: ', $_ENV['DB_DRIVER']); // untuk test: lihat respon di bagian network browser 
-        $this->host = getenv('DB_HOST') ?: 'localhost';
-        $this->port = getenv('DB_PORT') ?: '3306';
-        $this->db_name = getenv('DB_NAME') ?: 'gudang_fashion';
-        $this->username = getenv('DB_USER') ?: 'root';
-        $this->password = getenv('DB_PASS') ?: '';
+        $this->host = getenv('DB_HOST') ?: 'aws-1-ap-southeast-1.pooler.supabase.com';
+        $this->port = getenv('DB_PORT') ?: '5432';
+        $this->db_name = getenv('DB_NAME') ?: 'postgres';
+        $this->username = getenv('DB_USER') ?: 'postgres.jsjuzybfndczyralckec';
+        $this->password = getenv('DB_PASS') ?: 'ekUrWqCWxU2f6CCZ';
     }
 
     public function getConnection() {
