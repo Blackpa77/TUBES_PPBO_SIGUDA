@@ -4,52 +4,105 @@ if (session_status() === PHP_SESSION_NONE) {
     session_start();
 }
 
-require_once __DIR__ . '/../config/path.php'; // base_url
+require_once __DIR__ . '/../vendor/autoload.php';
 
-// Jika sudah login, Atur return tampilan berdasarkan request
+use App\Config\Config;
+
+// Set base_url untuk login page
+$base_url = Config::getBaseUrl();
+
+// Jika sudah login, atur return tampilan berdasarkan request
 if (isset($_SESSION['user_id'])) {
-    // aturan request /<controller>?<action>
-    $path = ltrim($_SERVER['REQUEST_URI'], '/');
-    // var_dump("PATH: " . $path);
+    $request_uri = parse_url($_SERVER['REQUEST_URI'], PHP_URL_PATH);
+    $path = trim($request_uri, '/');
+    
+    // Remove index.php dari path jika ada
+    $path = str_replace('index.php', '', $path);
+    $path = trim($path, '/');
+    
+    // Default controller
+    $controller = 'Dashboard';
+    $action = 'index';
 
-    // ambil nama class controller (string sebelum ?)
-    $controller = explode('?', $path)[0];
-    // var_dump("CONTROLLER: " . $controller);
+    // Parse path (contoh: /Kategori, /Produk, /Transaksi)
+    if (!empty($path)) {
+        $parts = explode('/', $path);
+        $controller = ucfirst(strtolower($parts[0]));
+        
+        // Cek jika ada action di URL
+        if (isset($parts[1])) {
+            $action = $parts[1];
+        }
+    }
 
-    // cek apakah file controller ada
-    if (file_exists(__DIR__ . '/../controllers/' . $controller . 'Controller.php')) {
-        require_once __DIR__ . '/../controllers/' . $controller . 'Controller.php';
+    // Cek query string untuk action
+    if (isset($_GET['action'])) {
+        $action = $_GET['action'];
+    }
+
+    // Cek query string untuk controller
+    if (isset($_GET['controller'])) {
+        $controller = ucfirst(strtolower($_GET['controller']));
+    }
+
+    // Handle Logout
+    if ($controller === 'Logout') {
+        $logoutController = new App\Controllers\LogoutController();
+        $logoutController->index();
         exit();
     }
 
-    require_once __DIR__ . '/../controllers/DashboardController.php';
+    // Buat class name
+    $controllerClass = 'App\\Controllers\\' . $controller . 'Controller';
+
+    // Cek apakah class ada
+    if (class_exists($controllerClass)) {
+        try {
+            $ctrl = new $controllerClass();
+            if (method_exists($ctrl, $action)) {
+                $ctrl->$action();
+            } else {
+                // Fallback ke index jika action tidak ada
+                if (method_exists($ctrl, 'index')) {
+                    $ctrl->index();
+                } else {
+                    throw new Exception("Method not found");
+                }
+            }
+        } catch (Exception $e) {
+            // Jika error, redirect ke dashboard
+            $dashboard = new App\Controllers\DashboardController();
+            $dashboard->index();
+        }
+        exit();
+    }
+
+    // Default ke Dashboard jika controller tidak ditemukan
+    $dashboard = new App\Controllers\DashboardController();
+    $dashboard->index();
     exit();
 }
 
 // Proses Login saat tombol ditekan
 if ($_SERVER['REQUEST_METHOD'] == 'POST') {
-    require_once __DIR__ . '/../config/database.php';
-    require_once __DIR__ . '/../models/Admin.php';
+    $db = (new App\Config\Database())->getConnection();
+    $admin = new App\Models\Admin($db);
 
-    $database = new Database();
-    $db = $database->getConnection();
-    $admin = new Admin($db);
-
-    $username = $_POST['username'];
-    $password = $_POST['password'];
+    $username = $_POST['username'] ?? '';
+    $password = $_POST['password'] ?? '';
 
     if ($admin->login($username, $password)) {
-        // PERBAIKAN: Menggunakan Getter karena properti di Model sekarang Private
         $_SESSION['user_id'] = $admin->getId();
         $_SESSION['username'] = $admin->getUsername();
         $_SESSION['nama_lengkap'] = $admin->getNamaLengkap();
         $_SESSION['role'] = $admin->getRole();
 
-        // redirect kembali ke root → yang akan otomatis load DashboardController
-        header("Location: $base_url");
+        header("Location: /");
         exit();
     } else {
         $error = "Username atau password salah!";
     }
 }
-include_once __DIR__ . '/../App/iews/login.php';
+
+// Tampilkan halaman login
+include_once __DIR__ . '/../App/Views/login.php';

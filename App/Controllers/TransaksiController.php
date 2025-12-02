@@ -3,6 +3,7 @@
 namespace App\Controllers;
 
 use App\Config\Database;
+use App\Config\Config;
 use App\Models\TransaksiMasuk;
 use App\Models\TransaksiKeluar;
 use App\Models\Produk;
@@ -11,6 +12,7 @@ class TransaksiController
 {
     private $db;
     private $produk;
+    private $base_url;
 
     public function __construct()
     {
@@ -19,30 +21,28 @@ class TransaksiController
         }
 
         if (!isset($_SESSION['user_id'])) {
-            header("Location: ../index.php");
+            header("Location: /");
             exit();
         }
 
         $database = new Database();
         $this->db = $database->getConnection();
         $this->produk = new Produk($this->db);
+        $this->base_url = Config::getBaseUrl();
     }
 
-    /** ---------------------------------------------
-     * 1. INDEX – daftar semua transaksi
-     * --------------------------------------------- */
     public function index()
     {
+        $base_url = $this->base_url;
+        
         $transaksiMasuk = new TransaksiMasuk($this->db);
         $transaksiKeluar = new TransaksiKeluar($this->db);
 
-        $stmtMasuk  = $transaksiMasuk->readAll()->fetchAll(\PDO::FETCH_ASSOC);
+        $stmtMasuk = $transaksiMasuk->readAll()->fetchAll(\PDO::FETCH_ASSOC);
         $stmtKeluar = $transaksiKeluar->readAll()->fetchAll(\PDO::FETCH_ASSOC);
 
-        // gabung data
         $transaksiList = array_merge($stmtMasuk, $stmtKeluar);
 
-        // urutkan DESC
         usort($transaksiList, function($a, $b) {
             return strtotime($b['tanggal']) - strtotime($a['tanggal']);
         });
@@ -50,13 +50,11 @@ class TransaksiController
         require_once __DIR__ . '/../Views/transaksi/index.php';
     }
 
-    /** ---------------------------------------------
-     * 2. CREATE – tambah transaksi
-     * --------------------------------------------- */
     public function create()
     {
+        $base_url = $this->base_url;
+        
         if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-
             $jenis = $_POST['jenis_transaksi'] ?? 'masuk';
             $transaksi = ($jenis === 'masuk') 
                          ? new TransaksiMasuk($this->db) 
@@ -68,13 +66,12 @@ class TransaksiController
             $transaksi->keterangan = $_POST['keterangan'] ?? '';
             $transaksi->jenis_transaksi = $jenis;
 
-            // Validasi khusus transaksi keluar
             if ($jenis === 'keluar' && !$transaksi->validateStock()) {
                 $_SESSION['error'] = "Stok tidak mencukupi untuk transaksi keluar!";
             } else {
                 if ($transaksi->save()) {
                     $_SESSION['success'] = "Transaksi berhasil disimpan";
-                    header("Location: index.php?action=transaksi");
+                    header("Location: {$this->base_url}/Transaksi");
                     exit();
                 } else {
                     $_SESSION['error'] = "Gagal menyimpan transaksi";
@@ -82,19 +79,13 @@ class TransaksiController
             }
         }
 
-        // load daftar produk
         $produkList = $this->produk->readAll()->fetchAll(\PDO::FETCH_ASSOC);
-
         require_once __DIR__ . '/../Views/transaksi/create.php';
     }
 
-    /** ---------------------------------------------
-     * 3. DELETE – hapus transaksi
-     * --------------------------------------------- */
     public function delete()
     {
         if (isset($_GET['id'], $_GET['jenis'])) {
-
             $jenis = $_GET['jenis'];
             $transaksi = ($jenis === 'masuk') 
                          ? new TransaksiMasuk($this->db) 
@@ -109,22 +100,21 @@ class TransaksiController
             }
         }
 
-        header("Location: index.php?action=transaksi");
+        header("Location: {$this->base_url}/Transaksi");
         exit();
     }
 
-    /** ---------------------------------------------
-     * 4. CETAK LAPORAN
-     * --------------------------------------------- */
     public function cetakLaporan()
     {
+        $base_url = $this->base_url;
+        
         $start_date = $_GET['start_date'] ?? date('Y-m-01');
-        $end_date   = $_GET['end_date']   ?? date('Y-m-d');
+        $end_date = $_GET['end_date'] ?? date('Y-m-d');
 
-        $transaksiMasuk  = new TransaksiMasuk($this->db);
+        $transaksiMasuk = new TransaksiMasuk($this->db);
         $transaksiKeluar = new TransaksiKeluar($this->db);
 
-        $dataMasuk  = $transaksiMasuk->readLaporan($start_date, $end_date)->fetchAll(\PDO::FETCH_ASSOC);
+        $dataMasuk = $transaksiMasuk->readLaporan($start_date, $end_date)->fetchAll(\PDO::FETCH_ASSOC);
         $dataKeluar = $transaksiKeluar->readLaporan($start_date, $end_date)->fetchAll(\PDO::FETCH_ASSOC);
 
         $data = array_merge($dataMasuk, $dataKeluar);
