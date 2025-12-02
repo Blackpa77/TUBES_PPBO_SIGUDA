@@ -3,6 +3,7 @@
 namespace App\Controllers;
 
 use App\Config\Database;
+use App\Models\Produk;
 use App\Models\Kategori;
 use App\Models\TransaksiMasuk;
 use App\Models\TransaksiKeluar;
@@ -31,6 +32,7 @@ class DashboardController
         $this->db = (new Database())->getConnection();
 
         // 4. Load model (fungsi asli tetap sama)
+        $this->produk    = new Produk($this->db);
         $this->kategori = new Kategori($this->db);
         $this->masuk    = new TransaksiMasuk($this->db);
         $this->keluar   = new TransaksiKeluar($this->db);
@@ -39,9 +41,10 @@ class DashboardController
     public function index()
     {
         // 5. Ambil data sesuai dashboard.php (logika tetap sama)
-        $kategori = $this->kategori->getAll();
-        $barangMasuk = $this->masuk->getToday();
-        $barangKeluar = $this->keluar->getToday();
+        $produk = $this->produk;
+        $kategori = $this->kategori;
+        $transaksiMasuk = $this->masuk;
+        $transaksiKeluar = $this->keluar;
 
         // 6. Kirim ke view seperti kode asli
         require_once __DIR__ . '/../Views/dashboard.php';

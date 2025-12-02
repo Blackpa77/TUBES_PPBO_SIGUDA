@@ -11,31 +11,40 @@ class KategoriController
     private $kategori;
     private $base_url;
 
-    public function __construct($base_url)
+    // Constructor sekarang optional parameter $base_url
+    public function __construct($base_url = null)
     {
-        session_start();
+        // Start session jika belum
+        if (session_status() === PHP_SESSION_NONE) {
+            session_start();
+        }
 
-        $this->base_url = $base_url;
+        $this->base_url = $base_url ?? '/';
 
         // Koneksi database
         $this->db = (new Database())->getConnection();
 
-        // Load model (fungsi tidak diubah)
+        // Load model
         $this->kategori = new Kategori($this->db);
     }
 
+    /** --------------------------
+     * LIST / INDEX
+     * -------------------------- */
     public function index()
     {
         $stmt = $this->kategori->readAll();
-
         include __DIR__ . '/../Views/kategori/index.php';
     }
 
+    /** --------------------------
+     * CREATE
+     * -------------------------- */
     public function create()
     {
-        if ($_SERVER['REQUEST_METHOD'] == 'POST') {
+        if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
-            $this->kategori->nama_kategori = $_POST['nama_kategori'];
+            $this->kategori->setNamaKategori($_POST['nama_kategori']);
 
             if ($this->kategori->create()) {
                 $_SESSION['success'] = "Kategori berhasil ditambahkan";
@@ -49,47 +58,57 @@ class KategoriController
         include __DIR__ . '/../Views/kategori/create.php';
     }
 
+    /** --------------------------
+     * EDIT
+     * -------------------------- */
     public function edit()
     {
-        if (isset($_GET['id'])) {
-
-            $this->kategori->id_kategori = $_GET['id'];
-            $this->kategori->readOne();
-
-            if ($_SERVER['REQUEST_METHOD'] == 'POST') {
-                $this->kategori->nama_kategori = $_POST['nama_kategori'];
-
-                if ($this->kategori->update()) {
-                    $_SESSION['success'] = "Kategori berhasil diupdate";
-                    header("Location: {$this->base_url}/Kategori");
-                    exit();
-                } else {
-                    $_SESSION['error'] = "Gagal mengupdate kategori";
-                }
-            }
-
-            include __DIR__ . '/../Views/kategori/edit.php';
+        if (!isset($_GET['id'])) {
+            header("Location: {$this->base_url}?controller=kategori&action=index");
+            exit();
         }
+
+        $this->kategori->setIdKategori($_GET['id']);
+        $this->kategori->readOne();
+
+        if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+            $this->kategori->setNamaKategori($_POST['nama_kategori']);
+
+            if ($this->kategori->update()) {
+                $_SESSION['success'] = "Kategori berhasil diupdate";
+                header("Location: {$this->base_url}?controller=kategori&action=index");
+                exit();
+            } else {
+                $_SESSION['error'] = "Gagal mengupdate kategori";
+            }
+        }
+
+        include __DIR__ . '/../Views/kategori/edit.php';
     }
 
+    /** --------------------------
+     * DELETE
+     * -------------------------- */
     public function delete()
     {
-        if (isset($_GET['id'])) {
+        if (!isset($_GET['id'])) {
+            header("Location: {$this->base_url}?controller=kategori&action=index");
+            exit();
+        }
 
-            $this->kategori->id_kategori = $_GET['id'];
+        $this->kategori->setIdKategori($_GET['id']);
 
-            if ($this->kategori->countProduk() > 0) {
-                $_SESSION['error'] = "Tidak dapat menghapus kategori yang memiliki produk";
+        if ($this->kategori->countProduk() > 0) {
+            $_SESSION['error'] = "Tidak dapat menghapus kategori yang memiliki produk";
+        } else {
+            if ($this->kategori->delete()) {
+                $_SESSION['success'] = "Kategori berhasil dihapus";
             } else {
-                if ($this->kategori->delete()) {
-                    $_SESSION['success'] = "Kategori berhasil dihapus";
-                } else {
-                    $_SESSION['error'] = "Gagal menghapus kategori";
-                }
+                $_SESSION['error'] = "Gagal menghapus kategori";
             }
         }
 
-        header("Location: {$this->base_url}/Kategori");
+        header("Location: {$this->base_url}?controller=kategori&action=index");
         exit();
     }
 }

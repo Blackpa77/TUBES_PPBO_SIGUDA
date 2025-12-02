@@ -2,18 +2,12 @@
 
 namespace App\Controllers;
 
-class AuthController
+class LogoutController
 {
-    private $base_url;
-
-    public function __construct($base_url)
+    public function index()
     {
         session_start();
-        $this->base_url = $base_url;
-    }
-
-    public function logout()
-    {
+        
         // Hapus semua variabel session
         $_SESSION = [];
 
@@ -35,8 +29,8 @@ class AuthController
         // Hancurkan session
         session_destroy();
 
-        // Redirect ke halaman login (fungsi tetap sama)
-        header("Location: {$this->base_url}");
+        // Redirect ke halaman login
+        header("Location: /");
         exit();
     }
 }

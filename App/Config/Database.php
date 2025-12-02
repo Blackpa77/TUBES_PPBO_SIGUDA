@@ -2,8 +2,6 @@
 
 namespace App\Config;
 
-require __DIR__ . '/../vendor/autoload.php';
-
 use PDO;
 use PDOException;
 use Dotenv\Dotenv;
@@ -26,9 +24,9 @@ class Database
 
         // Baca env
         $this->host = getenv('DB_HOST') ?: 'localhost';
-        $this->port = getenv('DB_PORT') ?: '5432';
+        $this->port = getenv('DB_PORT') ?: '3306';
         $this->db_name = getenv('DB_NAME') ?: 'gudang_fashion';
-        $this->username = getenv('DB_USER') ?: 'postgres';
+        $this->username = getenv('DB_USER') ?: 'root';
         $this->password = getenv('DB_PASS') ?: '';
     }
 
@@ -38,8 +36,8 @@ class Database
 
         try {
             // DRIVER & SSLMODE dari .env
-            $driver  = $_ENV['DB_DRIVER'] ?? 'pgsql';
-            $sslmode = $_ENV['DB_SSLMODE'] ?? 'require';
+            $driver  = $_ENV['DB_DRIVER'] ?? 'mysql';
+            $sslmode = $_ENV['DB_SSLMODE'] ?? '';
 
             // DSN (PostgreSQL)
             $dsn = "$driver:host={$this->host};port={$this->port};dbname={$this->db_name};sslmode=$sslmode";
