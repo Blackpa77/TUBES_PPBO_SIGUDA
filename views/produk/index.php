@@ -1,8 +1,10 @@
 <?php
-// views/kategori/index.php
-// Pastikan variabel $stmt ada dari Controller
+// views/produk/index.php
+// Pastikan file ini diakses melalui Controller, bukan langsung
+
+// Cek apakah variable $stmt ada. Jika tidak, lempar error atau inisialisasi kosong.
 if (!isset($stmt)) {
-    echo "<div class='alert alert-danger'>Error: Silakan akses halaman ini melalui Controller (KategoriController.php).</div>";
+    echo "<div class='alert alert-danger'>Error: Data tidak ditemukan. Silakan akses lewat Controller.</div>";
     exit;
 }
 ?>
@@ -12,7 +14,7 @@ if (!isset($stmt)) {
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Data Kategori - SIGUDA PPBO</title>
+    <title>Data Produk - SIGUDA PPBO</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css">
 </head>
@@ -23,11 +25,14 @@ if (!isset($stmt)) {
     <div class="container mt-4">
         <div class="row mb-3">
             <div class="col-md-6">
-                <h2><i class="bi bi-tags"></i> Data Kategori</h2>
+                <h2><i class="bi bi-box-seam"></i> Data Produk</h2>
             </div>
             <div class="col-md-6 text-end">
-                <a href="<?= $base_url ?>/kategori?action=create" class="btn btn-primary">
-                    <i class="bi bi-plus-circle"></i> Tambah Kategori
+                <a href="<?= $base_url ?>/Produk?action=create" class="btn btn-primary">
+                    <i class="bi bi-plus-circle"></i> Tambah Produk
+                </a>
+                <a href="<?= $base_url ?>/Produk?action=cetak" target="_blank" class="btn btn-secondary">
+                    <i class="bi bi-printer"></i> Cetak Laporan
                 </a>
             </div>
         </div>
@@ -54,27 +59,44 @@ if (!isset($stmt)) {
                     <table class="table table-striped table-hover align-middle">
                         <thead class="table-dark">
                             <tr>
-                                <th width="5%">No</th>
-                                <th>Nama Kategori</th>
-                                <th width="15%" class="text-center">Aksi</th>
+                                <th>No</th>
+                                <th>Kode</th>
+                                <th>Nama Produk</th>
+                                <th>Kategori</th>
+                                <th>Stok</th>
+                                <th>Harga Beli</th>
+                                <th>Harga Jual</th>
+                                <th class="text-center">Aksi</th>
                             </tr>
                         </thead>
                         <tbody>
                             <?php 
                             $no = 1;
-                            // PERBAIKAN: Gunakan $stmt dan while loop
+                            // KITA GUNAKAN $stmt (bukan $data)
                             while($row = $stmt->fetch(PDO::FETCH_ASSOC)): 
                             ?>
                             <tr>
                                 <td><?= $no++; ?></td>
+                                <td><span class="badge bg-secondary"><?= htmlspecialchars($row['kode_produk'] ?? '-'); ?></span></td>
                                 <td>
-                                    <strong><?= htmlspecialchars($row['nama_kategori']); ?></strong>
+                                    <strong><?= htmlspecialchars($row['nama_produk']); ?></strong><br>
+                                    <small class="text-muted"><?= htmlspecialchars($row['ukuran']); ?> | <?= htmlspecialchars($row['warna'] ?? '-'); ?></small>
                                 </td>
+                                <td><?= htmlspecialchars($row['nama_kategori'] ?? '-'); ?></td>
+                                <td>
+                                    <?php if($row['stok'] <= 10): ?>
+                                        <span class="badge bg-danger"><?= $row['stok']; ?></span>
+                                    <?php else: ?>
+                                        <span class="badge bg-success"><?= $row['stok']; ?></span>
+                                    <?php endif; ?>
+                                </td>
+                                <td>Rp <?= number_format($row['harga_beli'], 0, ',', '.'); ?></td>
+                                <td>Rp <?= number_format($row['harga_jual'], 0, ',', '.'); ?></td>
                                 <td class="text-center">
-                                    <a href="<?= $base_url ?>/Kategori?action=edit&id=<?= $row['id_kategori']; ?>" class="btn btn-warning btn-sm text-white" title="Edit">
+                                    <a href="<?= $base_url ?>/Produk?action=edit&id=<?= $row['id_produk']; ?>" class="btn btn-warning btn-sm text-white" title="Edit">
                                         <i class="bi bi-pencil"></i>
                                     </a>
-                                    <a href="<?= $base_url ?>/Kategori?action=delete&id=<?= $row['id_kategori']; ?>" class="btn btn-danger btn-sm" onclick="return confirm('Yakin ingin menghapus kategori ini? Produk di dalamnya juga akan terhapus!')" title="Hapus">
+                                    <a href="<?= $base_url ?>/Produk?action=delete&id=<?= $row['id_produk']; ?>" class="btn btn-danger btn-sm" onclick="return confirm('Yakin ingin menghapus data ini?')" title="Hapus">
                                         <i class="bi bi-trash"></i>
                                     </a>
                                 </td>
@@ -83,9 +105,9 @@ if (!isset($stmt)) {
 
                             <?php if($no == 1): ?>
                             <tr>
-                                <td colspan="3" class="text-center py-4 text-muted">
-                                    <i class="bi bi-inbox display-4"></i><br>
-                                    Belum ada data kategori.
+                                <td colspan="8" class="text-center py-4 text-muted">
+                                    <i class="bi bi-inbox display-6"></i><br>
+                                    Belum ada data produk. Silakan tambah data baru.
                                 </td>
                             </tr>
                             <?php endif; ?>

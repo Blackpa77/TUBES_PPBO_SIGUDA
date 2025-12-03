@@ -3,10 +3,6 @@
 if (!isset($produk)) {
     exit("Error: Akses langsung tidak diizinkan.");
 }
-
-if (!isset($base_url)) {
-    $base_url = \App\Config\Config::getBaseUrl();
-}
 ?>
 
 <!DOCTYPE html>

@@ -7,7 +7,6 @@ class Admin {
     private $conn;
     private $table = "users";
 
-    // 1. OOP - Menggunakan Encapsulation (property private/protected, getter/setter)
     private $id;
     private $username;
     private $password;
@@ -18,14 +17,13 @@ class Admin {
         $this->conn = $db;
     }
 
-    // --- GETTER & SETTER (Wajib untuk Checklist OOP) ---
+    // --- GETTER & SETTER ---
     public function getId() { return $this->id; }
     public function setId($id) { $this->id = $id; }
 
     public function getUsername() { return $this->username; }
     public function setUsername($username) { $this->username = $username; }
 
-    // Password hanya setter demi keamanan (Write Only)
     public function setPassword($password) { 
         $this->password = $password; 
     }
@@ -36,7 +34,6 @@ class Admin {
     public function getRole() { return $this->role; }
     public function setRole($role) { $this->role = $role; }
 
-    // Method Login
     public function login($usernameInput, $passwordInput) {
         $query = "SELECT id, username, password, nama_lengkap, role 
                 FROM " . $this->table . " 
@@ -48,13 +45,8 @@ class Admin {
 
         if($stmt->rowCount() > 0) {
             $row = $stmt->fetch(PDO::FETCH_ASSOC);
-            //-- untuk test (matikan di production)
-            // $pass = password_hash("admin123", PASSWORD_DEFAULT);
-            // var_dump("PASS: ", $pass); 
-            // var_dump("ROW: ", $row['password']);
-            // Verifikasi password hash
+            
             if(password_verify($passwordInput, $row['password'])) {
-                // Set data ke property private lewat setter/langsung
                 $this->id = $row['id'];
                 $this->username = $row['username'];
                 $this->nama_lengkap = $row['nama_lengkap'];
@@ -65,7 +57,6 @@ class Admin {
         return false;
     }
 
-    // 4. Fungsionalitas Utama Aplikasi - CRUD (Tambah, ubah, hapus)
     public function create() {
         $query = "INSERT INTO " . $this->table . " 
                 SET username=:username, password=:password, 
@@ -73,7 +64,6 @@ class Admin {
         
         $stmt = $this->conn->prepare($query);
         
-        // Ambil data dari property private
         $uname = htmlspecialchars(strip_tags($this->username));
         $nama = htmlspecialchars(strip_tags($this->nama_lengkap));
         $role = htmlspecialchars(strip_tags($this->role));
@@ -90,7 +80,6 @@ class Admin {
         return false;
     }
 
-    // Method Update Admin
     public function update() {
         $query = "UPDATE " . $this->table . " 
                 SET username=:username, nama_lengkap=:nama_lengkap, role=:role";
@@ -120,6 +109,4 @@ class Admin {
 
         return $stmt->execute();
     }
-
 }
-?>

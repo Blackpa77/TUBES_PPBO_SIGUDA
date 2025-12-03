@@ -1,5 +1,8 @@
 <?php
 
+// Load composer autoload untuk local development
+require_once __DIR__ . '/vendor/autoload.php';
+
 // Ambil path file yang diminta
 $requested = __DIR__ . '/public' . parse_url($_SERVER['REQUEST_URI'], PHP_URL_PATH);
 

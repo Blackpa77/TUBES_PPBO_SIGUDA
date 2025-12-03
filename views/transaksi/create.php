@@ -1,6 +1,9 @@
 <?php
+// views/transaksi/create.php
+
+// Cek apakah variabel $produkList ada (dikirim dari Controller)
 if (!isset($produkList)) {
-    echo "<div class='alert alert-danger'>Error: Silakan akses halaman ini melalui Controller.</div>";
+    echo "<div class='alert alert-danger'>Error: Silakan akses halaman ini melalui Controller (TransaksiController.php).</div>";
     exit;
 }
 ?>
@@ -27,6 +30,7 @@ if (!isset($produkList)) {
                     </div>
                     <div class="card-body">
                         
+                        <!-- PERBAIKAN: Ubah action dari "TransaksiController.php?action=create" menjadi "<?= $base_url ?>/Transaksi?action=create" -->
                         <form method="POST" action="<?= $base_url ?>/Transaksi?action=create">
                             
                             <div class="mb-3">
@@ -37,18 +41,19 @@ if (!isset($produkList)) {
                                         <option value="<?= $prod['id_produk']; ?>">
                                             <?= htmlspecialchars($prod['nama_produk']); ?> 
                                             (Ukuran: <?= $prod['ukuran']; ?>) - 
-                                            Stok: <?= $prod['stok']; ?>
+                                            Stok Saat Ini: <?= $prod['stok']; ?>
                                         </option>
                                     <?php endforeach; ?>
                                 </select>
+                                <div class="form-text">Pilih produk yang akan ditransaksikan.</div>
                             </div>
 
                             <div class="row">
                                 <div class="col-md-6 mb-3">
                                     <label for="jenis_transaksi" class="form-label">Jenis Transaksi <span class="text-danger">*</span></label>
                                     <select name="jenis_transaksi" id="jenis_transaksi" class="form-select" required>
-                                        <option value="masuk">Barang Masuk (+ Stok)</option>
-                                        <option value="keluar">Barang Keluar (- Stok)</option>
+                                        <option value="masuk" class="text-success fw-bold">Barang Masuk (+ Stok)</option>
+                                        <option value="keluar" class="text-danger fw-bold">Barang Keluar (- Stok)</option>
                                     </select>
                                 </div>
 
@@ -65,11 +70,11 @@ if (!isset($produkList)) {
 
                             <div class="mb-4">
                                 <label for="keterangan" class="form-label">Keterangan</label>
-                                <textarea name="keterangan" id="keterangan" class="form-control" rows="3" placeholder="Contoh: Kulakan dari supplier A"></textarea>
+                                <textarea name="keterangan" id="keterangan" class="form-control" rows="3" placeholder="Contoh: Kulakan dari supplier A, atau Terjual ke Bpk Budi"></textarea>
                             </div>
 
                             <div class="d-grid gap-2 d-md-flex justify-content-md-end">
-                                <a href="<?= $base_url ?>/Transaksi" class="btn btn-secondary me-md-2">
+                                <a href="<?= $base_url ?>/Transaksi?action=index" class="btn btn-secondary me-md-2">
                                     <i class="bi bi-x-circle"></i> Batal
                                 </a>
                                 <button type="submit" class="btn btn-primary">
@@ -78,7 +83,7 @@ if (!isset($produkList)) {
                             </div>
 
                         </form>
-                    </div>
+                        </div>
                 </div>
             </div>
         </div>

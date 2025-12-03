@@ -1,6 +1,9 @@
 <?php
+// views/kategori/edit.php
+
+// Cek apakah data kategori ada (dikirim dari Controller)
 if (!isset($kategori)) {
-    echo "<div class='alert alert-danger'>Error: Data kategori tidak ditemukan.</div>";
+    echo "<div class='alert alert-danger'>Error: Data kategori tidak ditemukan. Silakan akses lewat Controller.</div>";
     exit;
 }
 ?>
@@ -36,7 +39,7 @@ if (!isset($kategori)) {
                             </div>
 
                             <div class="d-grid gap-2 d-md-flex justify-content-md-end">
-                                <a href="<?= $base_url ?>/Kategori" class="btn btn-secondary me-md-2">
+                                <a href="KategoriController.php?action=index" class="btn btn-secondary me-md-2">
                                     <i class="bi bi-x-circle"></i> Batal
                                 </a>
                                 <button type="submit" class="btn btn-primary">
