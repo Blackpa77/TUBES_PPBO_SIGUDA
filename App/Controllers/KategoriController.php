@@ -28,27 +28,21 @@ class KategoriController
         $this->kategori = new Kategori($this->db);
     }
 
-    /** --------------------------
-     * LIST / INDEX
-     * -------------------------- */
-    public function index()
-    {
-        $stmt = $this->kategori->readAll();
-        include __DIR__ . '/../Views/kategori/index.php';
-    }
 
     /** --------------------------
      * CREATE
      * -------------------------- */
-    public function create()
+        public function create()
     {
+        $base_url = \App\Config\Config::getBaseUrl();
+        
         if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
             $this->kategori->setNamaKategori($_POST['nama_kategori']);
 
             if ($this->kategori->create()) {
                 $_SESSION['success'] = "Kategori berhasil ditambahkan";
-                header("Location: {$this->base_url}?controller=kategori&action=index");
+                header("Location: {$base_url}/Kategori");
                 exit();
             } else {
                 $_SESSION['error'] = "Gagal menambahkan kategori";
@@ -58,13 +52,12 @@ class KategoriController
         include __DIR__ . '/../Views/kategori/create.php';
     }
 
-    /** --------------------------
-     * EDIT
-     * -------------------------- */
     public function edit()
     {
+        $base_url = \App\Config\Config::getBaseUrl();
+        
         if (!isset($_GET['id'])) {
-            header("Location: {$this->base_url}?controller=kategori&action=index");
+            header("Location: {$base_url}/Kategori");
             exit();
         }
 
@@ -76,7 +69,7 @@ class KategoriController
 
             if ($this->kategori->update()) {
                 $_SESSION['success'] = "Kategori berhasil diupdate";
-                header("Location: {$this->base_url}?controller=kategori&action=index");
+                header("Location: {$base_url}/Kategori");
                 exit();
             } else {
                 $_SESSION['error'] = "Gagal mengupdate kategori";
@@ -84,6 +77,13 @@ class KategoriController
         }
 
         include __DIR__ . '/../Views/kategori/edit.php';
+    }
+
+    public function index()
+    {
+        $base_url = \App\Config\Config::getBaseUrl();
+        $stmt = $this->kategori->readAll();
+        include __DIR__ . '/../Views/kategori/index.php';
     }
 
     /** --------------------------

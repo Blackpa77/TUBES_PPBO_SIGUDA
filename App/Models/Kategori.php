@@ -13,7 +13,13 @@ class Kategori {
     public function __construct($db) {
         $this->conn = $db;
     }
+    public function setIdKategori($id) { 
+    $this->id_kategori = $id; 
+}
 
+public function setNamaKategori($nama) { 
+    $this->nama_kategori = $nama; 
+}
     // CREATE
     public function create() {
         $query = "INSERT INTO {$this->table} SET nama_kategori=:nama_kategori";

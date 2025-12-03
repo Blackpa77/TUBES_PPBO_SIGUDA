@@ -26,7 +26,7 @@ if (!isset($stmt)) {
                 <h2><i class="bi bi-tags"></i> Data Kategori</h2>
             </div>
             <div class="col-md-6 text-end">
-                <a href="<?= $base_url ?>/Kategori?action=create" class="btn btn-primary">
+                <a href="<?= $base_url ?>/kategori?action=create" class="btn btn-primary">
                     <i class="bi bi-plus-circle"></i> Tambah Kategori
                 </a>
             </div>

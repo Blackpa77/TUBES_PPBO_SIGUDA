@@ -13,6 +13,7 @@ class ProdukController
     private $db;
     private $produk;
     private $kategori;
+    private $base_url;
 
     public function __construct()
     {
@@ -25,6 +26,8 @@ class ProdukController
 
         $this->produk = new Produk($this->db);
         $this->kategori = new Kategori($this->db);
+
+        $this->base_url = \App\Config\Config::getBaseUrl();
     }
 
     /** -----------------------------------------------------
@@ -33,7 +36,6 @@ class ProdukController
     public function index()
     {
         $stmt = $this->produk->readAll();
-
         require_once __DIR__ . '/../Views/produk/index.php';
     }
 
@@ -56,13 +58,15 @@ class ProdukController
 
             if ($this->produk->create()) {
                 $_SESSION['success'] = "Produk berhasil ditambahkan";
-                header("Location: index.php?action=produk");
+                $base_url = \App\Config\Config::getBaseUrl();
+                header("Location: {$base_url}/Produk");
                 exit();
             } else {
                 $_SESSION['error'] = "Gagal menambah produk (Kode Produk mungkin duplikat)";
             }
         }
 
+        $base_url = \App\Config\Config::getBaseUrl();
         $stmt_kategori = $this->kategori->readAll();
         require_once __DIR__ . '/../Views/produk/create.php';
     }
@@ -72,30 +76,39 @@ class ProdukController
      * ----------------------------------------------------- */
     public function edit()
     {
-        if (isset($_GET['id'])) {
+        if (!isset($_GET['id'])) {
+            $_SESSION['error'] = "ID produk tidak ditemukan";
+            header("Location: {$this->base_url}/Produk");
+            exit();
+        }
 
-            $this->produk->setIdProduk($_GET['id']);
-            $this->produk->readOne();
+        $id = $_GET['id'];
+        $this->produk->setIdProduk($id);
+        $data = $this->produk->readOne(); // pastikan readOne() mengembalikan array data
 
-            if ($_SERVER['REQUEST_METHOD'] == 'POST') {
+        if (!$data) {
+            $_SESSION['error'] = "Produk tidak ditemukan";
+            header("Location: {$this->base_url}/Produk");
+            exit();
+        }
 
-                $this->produk->setIdKategori($_POST['kategori_id']);
-                $this->produk->setKodeProduk($_POST['kode_produk']);
-                $this->produk->setNamaProduk($_POST['nama_produk']);
-                $this->produk->setUkuran($_POST['ukuran']);
-                $this->produk->setWarna($_POST['warna']);
-                $this->produk->setStok($_POST['stok']);
-                $this->produk->setHargaBeli($_POST['harga_beli']);
-                $this->produk->setHargaJual($_POST['harga_jual']);
-                $this->produk->setDeskripsi($_POST['deskripsi']);
+        if ($_SERVER['REQUEST_METHOD'] == 'POST') {
+            $this->produk->setIdKategori($_POST['kategori_id']);
+            $this->produk->setKodeProduk($_POST['kode_produk']);
+            $this->produk->setNamaProduk($_POST['nama_produk']);
+            $this->produk->setUkuran($_POST['ukuran']);
+            $this->produk->setWarna($_POST['warna']);
+            $this->produk->setStok($_POST['stok']);
+            $this->produk->setHargaBeli($_POST['harga_beli']);
+            $this->produk->setHargaJual($_POST['harga_jual']);
+            $this->produk->setDeskripsi($_POST['deskripsi']);
 
-                if ($this->produk->update()) {
-                    $_SESSION['success'] = "Produk berhasil diupdate";
-                    header("Location: index.php?action=produk");
-                    exit();
-                } else {
-                    $_SESSION['error'] = "Gagal mengupdate produk";
-                }
+            if ($this->produk->update()) {
+                $_SESSION['success'] = "Produk berhasil diperbarui";
+                header("Location: {$this->base_url}/Produk");
+                exit();
+            } else {
+                $_SESSION['error'] = "Gagal memperbarui produk";
             }
         }
 
@@ -108,17 +121,22 @@ class ProdukController
      * ----------------------------------------------------- */
     public function delete()
     {
-        if (isset($_GET['id'])) {
-            $this->produk->setIdProduk($_GET['id']);
-
-            if ($this->produk->delete()) {
-                $_SESSION['success'] = "Produk berhasil dihapus";
-            } else {
-                $_SESSION['error'] = "Gagal menghapus produk";
-            }
+        if (!isset($_GET['id'])) {
+            $_SESSION['error'] = "ID produk tidak ditemukan";
+            header("Location: {$this->base_url}/Produk");
+            exit();
         }
 
-        header("Location: index.php?action=produk");
+        $id = $_GET['id'];
+        $this->produk->setIdProduk($id);
+
+        if ($this->produk->delete()) {
+            $_SESSION['success'] = "Produk berhasil dihapus";
+        } else {
+            $_SESSION['error'] = "Gagal menghapus produk";
+        }
+
+        header("Location: {$this->base_url}/Produk");
         exit();
     }
 
@@ -129,7 +147,7 @@ class ProdukController
     {
         $stmt = $this->produk->readAll();
 
-        if (!isset($stmt)) {
+        if (!$stmt) {
             echo "Error: Data tidak ditemukan.";
             exit;
         }
@@ -144,6 +162,13 @@ class ProdukController
 
         ob_start();
         require __DIR__ . '/../Views/produk/cetak.php';
+        $html = ob_get_clean();
+
+        $dompdf->loadHtml($html);
+        $dompdf->setPaper('A4', 'landscape');
+        $dompdf->render();
+        $dompdf->stream("laporan_produk.pdf", ["Attachment" => false]);
+        exit();
     }
 
     /** -----------------------------------------------------

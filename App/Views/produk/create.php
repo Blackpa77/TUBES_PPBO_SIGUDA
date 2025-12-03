@@ -29,7 +29,7 @@ if (!isset($stmt_kategori)) {
                     </div>
                     <div class="card-body">
                         
-                        <form method="POST" action="ProdukController.php?action=create">
+                        <form method="POST" action="<?= $base_url ?>/Produk?action=create">
                             
                             <div class="mb-3">
                                 <label class="form-label">Kategori <span class="text-danger">*</span></label>
@@ -100,7 +100,7 @@ if (!isset($stmt_kategori)) {
                             </div>
 
                         </form>
-                        </div>
+                    </div>
                 </div>
             </div>
         </div>
